@@ -1,0 +1,73 @@
+{
+  "wave_20min/*.parquet, wave_2h/*.parquet": {
+    "station_code": {
+      "type": "string",
+      "description": "地点コード（3桁の文字列）。stations.parquet と結合するキー"
+    },
+    "datetime_jst": {
+      "type": "timestamp[s, tz=Asia/Tokyo]",
+      "description": "観測時刻（日本標準時 JST, UTC+9）。元データの年月日時分そのまま。2時間値は偶数正時の前後10分ずつ計20分間の観測の中心時刻"
+    },
+    "quality_flag": {
+      "type": "int16",
+      "description": "品質フラグ（元値のまま）。0=正常, 4=水圧計からの推定, 7=アナログ記録(全体)からの推定, 77=アナログ記録(最大波)からの推定, 9999=欠測。2/3/5/8/11/12/66 は公式資料に記載なし"
+    },
+    "n_waves": {
+      "type": "int16",
+      "description": "解析に用いた波の数。欠測は null"
+    },
+    "mean_wave_height_m": {
+      "type": "double",
+      "description": "平均波 波高 [m]"
+    },
+    "mean_wave_period_s": {
+      "type": "double",
+      "description": "平均波 周期 [s]"
+    },
+    "significant_wave_height_m": {
+      "type": "double",
+      "description": "有義波（1/3最大波）波高 H1/3 [m]"
+    },
+    "significant_wave_period_s": {
+      "type": "double",
+      "description": "有義波（1/3最大波）周期 T1/3 [s]"
+    },
+    "highest_tenth_wave_height_m": {
+      "type": "double",
+      "description": "1/10最大波 波高 H1/10 [m]"
+    },
+    "highest_tenth_wave_period_s": {
+      "type": "double",
+      "description": "1/10最大波 周期 T1/10 [s]"
+    },
+    "max_wave_height_m": {
+      "type": "double",
+      "description": "最大波 波高 Hmax [m]"
+    },
+    "max_wave_period_s": {
+      "type": "double",
+      "description": "最大波 周期 Tmax [s]"
+    },
+    "wave_direction_deg": {
+      "type": "int16",
+      "description": "主波向 [度]（北=0, 時計回り, 波が来る方向）。欠測・凪は null"
+    },
+    "is_calm": {
+      "type": "bool",
+      "description": "波向が「凪」(元値 6666) の場合 true"
+    }
+  },
+  "stations.parquet": {
+    "station_code": "地点コード",
+    "station_name": "地点名（元データのヘッダー）",
+    "instrument": "波高計の機種（観測地点一覧PDFの最新年。2005-2006年版は機種欄なし）",
+    "depth_m": "設置水深 [m]（負値）",
+    "latitude_deg": "北緯 [度, 10進]",
+    "longitude_deg": "東経 [度, 10進]",
+    "location_source_year": "位置情報を取った観測地点一覧PDFの年。2005年より前に廃止された地点は null",
+    "wave_20min_first_year / wave_20min_last_year": "20分値がある最初/最後の年",
+    "wave_2h_first_year / wave_2h_last_year": "2時間値がある最初/最後の年"
+  },
+  "station_list_by_year.parquet": "観測地点一覧PDF（2005-2024年, 2007年は抽出不可）の各年の行",
+  "coverage.parquet": "地点 x 種別 x 年ごとの行数と有義波高・波向の有効件数"
+}
