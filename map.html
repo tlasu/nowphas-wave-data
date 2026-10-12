@@ -34,6 +34,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
     background: var(--paper);
     border-right: 1px solid var(--line);
   }
@@ -219,9 +220,10 @@
     border: 0;
   }
   @media (max-width: 760px) {
-    body { flex-direction: column; }
-    aside { width: auto; height: 46%; border-right: 0; border-bottom: 1px solid var(--line); }
-    main { height: 54%; flex: none; }
+    body { flex-direction: column; height: auto; min-height: 100%; overflow: auto; }
+    aside { width: auto; height: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--line); }
+    .list-wrap { max-height: 280px; flex: none; }
+    main { height: 68vh; min-height: 360px; flex: none; }
   }
 </style>
 </head>
@@ -528,7 +530,8 @@ station_code,station_name,instrument,depth_m,latitude_deg,longitude_deg,location
     const buttons = list.querySelectorAll("button[data-code]");
     buttons.forEach(function (btn) {
       const on = btn.dataset.code === selected;
-      btn.setAttribute("aria-current", on ? "true" : "false");
+      if (on) btn.setAttribute("aria-current", "true");
+      else btn.removeAttribute("aria-current");
       if (on && scroll) btn.scrollIntoView({ block: "nearest" });
     });
   }
@@ -547,8 +550,8 @@ station_code,station_name,instrument,depth_m,latitude_deg,longitude_deg,location
     list.innerHTML = shown.map(function (s) {
       const color = COLORS[category(s)];
       const ended = isCurrent(s) ? "" : " ended";
-      const current = s.code === selected ? "true" : "false";
-      return '<li><button type="button" class="station" data-code="' + esc(s.code) + '" aria-current="' + current + '">'
+      const current = s.code === selected ? ' aria-current="true"' : "";
+      return '<li><button type="button" class="station" data-code="' + esc(s.code) + '"' + current + '>'
         + '<span class="dot' + ended + '" style="color:' + color + ';background:' + color + '"></span>'
         + '<span class="station-top"><span class="name">' + esc(s.name) + '</span><span class="code">' + esc(s.code) + "</span></span>"
         + '<span class="station-sub">' + esc(summaryLine(s)) + "</span>"
