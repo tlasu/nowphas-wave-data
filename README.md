@@ -25,14 +25,8 @@
 
 ## ダウンロード
 
-[Releases](https://github.com/tlasu/nowphas-wave-data/releases) から zip でまとめて取得できる。
-
-| ファイル | 内容 |
-|---|---|
-| `wave_20min.zip` | `wave_20min/` 一式 |
-| `wave_2h.zip` | `wave_2h/` 一式 |
-| `metadata.zip` | 地点メタデータ・coverage・schema・地図・README・LICENSE |
-| `nowphas-wave-data-all.zip` | 上記すべて |
+[Releases](https://github.com/tlasu/nowphas-wave-data/releases) から各ファイルを個別に取得できる。
+Release のアセット名にはディレクトリを含められないため、波浪データは `wave_20min_{station_code}.parquet` / `wave_2h_{station_code}.parquet` という名前になっている。
 
 リリースは `.github/workflows/release.yml` で作成する（`v*` タグの push、または Actions 画面からの手動実行）。
 

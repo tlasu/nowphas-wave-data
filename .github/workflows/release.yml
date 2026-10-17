@@ -1,7 +1,7 @@
 name: Release data
 
 # v* のタグを push するか、Actions 画面から手動実行すると、
-# 観測データを zip にまとめて GitHub Release に添付する。
+# 観測データのファイルをそのまま GitHub Release に添付する。
 on:
   push:
     tags: ["v*"]
@@ -24,19 +24,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build archives
+      - name: Collect files
         run: |
+          # Release のアセット名にはディレクトリを使えないので、
+          # wave_20min/101.parquet -> wave_20min_101.parquet のように平らにする
           mkdir dist
-          # Parquet は圧縮済みなので zip 側では圧縮しない
-          zip -0 -r dist/wave_20min.zip wave_20min
-          zip -0 -r dist/wave_2h.zip wave_2h
-          zip -r dist/metadata.zip README.md LICENSE schema.json map.html \
-            stations.parquet stations.csv station_list_by_year.parquet coverage.parquet
-          zip -0 -r dist/nowphas-wave-data-all.zip wave_20min wave_2h README.md LICENSE \
-            schema.json map.html stations.parquet stations.csv \
-            station_list_by_year.parquet coverage.parquet
-          (cd dist && sha256sum *.zip > SHA256SUMS.txt)
-          ls -lh dist
+          for d in wave_20min wave_2h; do
+            for f in "$d"/*.parquet; do
+              cp "$f" "dist/${d}_$(basename "$f")"
+            done
+          done
+          cp README.md LICENSE schema.json map.html stations.parquet stations.csv \
+            station_list_by_year.parquet coverage.parquet dist/
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          ls dist | wc -l
 
       - name: Create release
         run: |
@@ -45,10 +46,9 @@ jobs:
 
           | ファイル | 内容 |
           |---|---|
-          | `wave_20min.zip` | 20分値（2004-2024年, 80地点） |
-          | `wave_2h.zip` | 2時間値（1970-2024年, 97地点） |
-          | `metadata.zip` | 地点メタデータ・coverage・schema・地図・README・LICENSE |
-          | `nowphas-wave-data-all.zip` | 上記すべて |
+          | `wave_20min_{station_code}.parquet` | 20分値（2004-2024年, 80地点）。リポジトリの `wave_20min/{station_code}.parquet` |
+          | `wave_2h_{station_code}.parquet` | 2時間値（1970-2024年, 97地点）。リポジトリの `wave_2h/{station_code}.parquet` |
+          | `stations.parquet` ほか | 地点メタデータ・coverage・schema・地図・README・LICENSE |
           | `SHA256SUMS.txt` | チェックサム |
 
           出典：全国港湾海洋波浪情報網（ナウファス）（https://nowphas.mlit.go.jp/pastdata/）を加工して作成
