@@ -1,0 +1,61 @@
+name: Release data
+
+# v* のタグを push するか、Actions 画面から手動実行すると、
+# 観測データのファイルをそのまま GitHub Release に添付する。
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "リリースのタグ名（例: v1.0.0）"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect files
+        run: |
+          # Release のアセット名にはディレクトリを使えないので、
+          # wave_20min/101.parquet -> wave_20min_101.parquet のように平らにする
+          mkdir dist
+          for d in wave_20min wave_2h; do
+            for f in "$d"/*.parquet; do
+              cp "$f" "dist/${d}_$(basename "$f")"
+            done
+          done
+          cp README.md LICENSE schema.json map.html stations.parquet stations.csv \
+            station_list_by_year.parquet coverage.parquet dist/
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          ls dist | wc -l
+
+      - name: Create release
+        run: |
+          cat > notes.md <<'NOTES'
+          NOWPHAS 波浪観測データ（確定値, 1970-2024年）の Parquet 版。
+
+          | ファイル | 内容 |
+          |---|---|
+          | `wave_20min_{station_code}.parquet` | 20分値（2004-2024年, 80地点）。リポジトリの `wave_20min/{station_code}.parquet` |
+          | `wave_2h_{station_code}.parquet` | 2時間値（1970-2024年, 97地点）。リポジトリの `wave_2h/{station_code}.parquet` |
+          | `stations.parquet` ほか | 地点メタデータ・coverage・schema・地図・README・LICENSE |
+          | `SHA256SUMS.txt` | チェックサム |
+
+          出典：全国港湾海洋波浪情報網（ナウファス）（https://nowphas.mlit.go.jp/pastdata/）を加工して作成
+          ライセンス：CC BY 4.0
+          NOTES
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "NOWPHAS 波浪観測データ $TAG" \
+            --notes-file notes.md

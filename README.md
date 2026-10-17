@@ -23,6 +23,13 @@
 
 `map.html` をブラウザで開くと、緯度経度のある地点を地図で見られる。機種と地点名で絞り込める。背景地図は地理院タイルで、表示にはネットワーク接続が必要。同じフォルダに `stations.csv` があるときはそちらを読み、ないときは HTML 内の写しを使う。
 
+## ダウンロード
+
+[Releases](https://github.com/tlasu/nowphas-wave-data/releases) から各ファイルを個別に取得できる。
+Release のアセット名にはディレクトリを含められないため、波浪データは `wave_20min_{station_code}.parquet` / `wave_2h_{station_code}.parquet` という名前になっている。
+
+リリースは `.github/workflows/release.yml` で作成する（`v*` タグの push、または Actions 画面からの手動実行）。
+
 ## 波浪データの列
 
 | 列 | 型 | 説明 |
