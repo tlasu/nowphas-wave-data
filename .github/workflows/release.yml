@@ -54,8 +54,16 @@ jobs:
           出典：全国港湾海洋波浪情報網（ナウファス）（https://nowphas.mlit.go.jp/pastdata/）を加工して作成
           ライセンス：CC BY 4.0
           NOTES
-          gh release create "$TAG" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "NOWPHAS 波浪観測データ $TAG" \
-            --notes-file notes.md
+          # 画面から先に Release を作った場合などは、既存の Release にファイルを追加する
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "NOWPHAS 波浪観測データ $TAG" \
+              --notes-file notes.md
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "NOWPHAS 波浪観測データ $TAG" \
+              --notes-file notes.md
+          fi
