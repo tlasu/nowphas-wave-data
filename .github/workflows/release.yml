@@ -1,0 +1,61 @@
+name: Release data
+
+# v* のタグを push するか、Actions 画面から手動実行すると、
+# 観測データを zip にまとめて GitHub Release に添付する。
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "リリースのタグ名（例: v1.0.0）"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build archives
+        run: |
+          mkdir dist
+          # Parquet は圧縮済みなので zip 側では圧縮しない
+          zip -0 -r dist/wave_20min.zip wave_20min
+          zip -0 -r dist/wave_2h.zip wave_2h
+          zip -r dist/metadata.zip README.md LICENSE schema.json map.html \
+            stations.parquet stations.csv station_list_by_year.parquet coverage.parquet
+          zip -0 -r dist/nowphas-wave-data-all.zip wave_20min wave_2h README.md LICENSE \
+            schema.json map.html stations.parquet stations.csv \
+            station_list_by_year.parquet coverage.parquet
+          (cd dist && sha256sum *.zip > SHA256SUMS.txt)
+          ls -lh dist
+
+      - name: Create release
+        run: |
+          cat > notes.md <<'NOTES'
+          NOWPHAS 波浪観測データ（確定値, 1970-2024年）の Parquet 版。
+
+          | ファイル | 内容 |
+          |---|---|
+          | `wave_20min.zip` | 20分値（2004-2024年, 80地点） |
+          | `wave_2h.zip` | 2時間値（1970-2024年, 97地点） |
+          | `metadata.zip` | 地点メタデータ・coverage・schema・地図・README・LICENSE |
+          | `nowphas-wave-data-all.zip` | 上記すべて |
+          | `SHA256SUMS.txt` | チェックサム |
+
+          出典：全国港湾海洋波浪情報網（ナウファス）（https://nowphas.mlit.go.jp/pastdata/）を加工して作成
+          ライセンス：CC BY 4.0
+          NOTES
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "NOWPHAS 波浪観測データ $TAG" \
+            --notes-file notes.md
